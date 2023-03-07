@@ -1,0 +1,42 @@
+# workflow 이름
+name: Build and Deploy to Netlify
+
+on:
+  # master브랜치로 push하면 workflow 실행
+  push:
+    branches: ['main']
+
+jobs:
+  # 현재 build라고 부르는 하나의 job이 존재한다.
+  build:
+    # runs-on은 job이 어떤 OS에서 실행될지 지정한다.
+    runs-on: ubuntu-latest
+    
+    # steps는 작업들을 순차적으로 실행한다.
+    steps:
+      # $GITHUB_WORKSPACE에서 저장소를 체크아웃하여, 현재 job이 your 저장소에 접근할 수 있다.  
+      - uses: actions/checkout@v2
+
+      # package-lock.json && package.json file 동기화
+      - name: Install
+        run: rm -f package-lock.json && npm install
+
+      # 빌드
+      - name: Build
+        run: npm run build
+
+      # deploy
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v1.2
+
+        with:
+          #publish할 디렉터리 경로
+          publish-dir: './build'     
+          #publish할 브랜치 
+          production-branch: master
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+        #깃허브 해당 저장소 -> Settings -> Secrets -> Action에서 따로 설정이 필요하다.
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
